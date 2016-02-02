@@ -1,4 +1,4 @@
-# (C) Copyright IBM Corporation 2015.
+# (C) Copyright IBM Corporation 2016.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,16 +22,32 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install JRE
-ENV JRE_VERSION 1.8.0_sr1fp01
-RUN JRE_URL=$(wget -q -O - https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/wasdev/downloads/jre/index.yml | sed -n '/'$JRE_VERSION'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
-    && wget -q $JRE_URL -U UA-IBM-JVM-Docker -O /tmp/ibm-java.bin \
-    && chmod +x /tmp/ibm-java.bin \
-    && echo "INSTALLER_UI=silent" > /tmp/response.properties \
-    && echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties \
-    && echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties \
-    && mkdir /opt/ibm \
-    && /tmp/ibm-java.bin -i silent -f /tmp/response.properties \
-    && rm /tmp/response.properties \
+ENV JAVA_VERSION 8
+ENV JAVA_RMF 0.2.0
+ENV JAVA_VRMF $JAVA_VERSION.$JAVA_RMF
+ENV JAVA_TYPE jre
+ENV JAVA_EDITION javase
+ENV RUNTIMES_URL http://j9.ottawa.ibm.com/j9dt/incubator/virt/dhe/ibmruntimes/java/
+
+RUN TARCH=$(uname -p) \
+    && YML_FILENAME=ibm-java-$JAVA_TYPE-$JAVA_VERSION.$JAVA_RMF-linux-$TARCH-$JAVA_EDITION.yml \
+    && wget -q -O /tmp/$YML_FILENAME $RUNTIMES_URL/$JAVA_VERSION/$YML_FILENAME \
+    && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
+    && ESUM=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/,/md5sum/p' | sed -n 's/\s*md5sum:\s//p' | tr -d '\r') \
+    && wget -q $JAVA_URL -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin \
+    && ASUM=$(md5sum /tmp/ibm-java.bin) \
+    && if [ "$ESUM" = "$ASUM" ]; then \
+         chmod +x /tmp/ibm-java.bin \
+         echo "INSTALLER_UI=silent" > /tmp/response.properties \
+         echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties \
+         echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties \
+         mkdir /opt/ibm \
+         /tmp/ibm-java.bin -i silent -f /tmp/response.properties \
+         rm /tmp/response.properties \
+       else \
+         echo "ERROR: md5sum of the downloaded file does not match" \
+         exit 1; \
+       fi \
     && rm /tmp/ibm-java.bin
 ENV JAVA_HOME /opt/ibm/java
 ENV PATH $JAVA_HOME/jre/bin:$PATH
