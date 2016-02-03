@@ -35,20 +35,20 @@ RUN TARGET_ARCH=$(uname -p) \
     && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
     && wget -q $JAVA_URL -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin \
     && ESUM=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/,/md5sum/p' | sed -n 's/\s*md5sum:\s//p' | tr -d '\r') \
-    && ASUM=$(md5sum /tmp/ibm-java.bin | cut -d" " -f1) \
-    && if [ "$ESUM" = "$ASUM" ]; then \
-          chmod +x /tmp/ibm-java.bin; \
-          echo "INSTALLER_UI=silent" > /tmp/response.properties; \
-          echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties; \
-          echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties; \
-          mkdir /opt/ibm; \
-          /tmp/ibm-java.bin -i silent -f /tmp/response.properties; \
-          rm -f /tmp/response.properties; \
-       else \
-          echo "ERROR: md5sum of the downloaded file does not match"; \
-          exit 1; \
-       fi \
+    && echo "$ESUM /tmp/ibm-java.bin" | md5sum -c - \
+    && echo "INSTALLER_UI=silent" > /tmp/response.properties \
+    && echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties \
+    && echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties \
+    && mkdir /opt/ibm \
+    && chmod +x /tmp/ibm-java.bin \
+    && /tmp/ibm-java.bin -i silent -f /tmp/response.properties \
+    && rm -f /tmp/response.properties \
     && rm -f /tmp/ibm-java.bin
 
 ENV JAVA_HOME=/opt/ibm/java \
     PATH=/opt/ibm/java/jre/bin:$PATH
+
+COPY run_java.sh /usr/local/bin/
+
+CMD ["/usr/local/bin/run_java.sh"]
+
