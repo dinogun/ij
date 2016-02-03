@@ -23,15 +23,15 @@ RUN apt-get update \
 
 ENV JAVA_VERSION=8 \
     JAVA_RMF=0.2.0 \
-    JAVA_TYPE="jre" \
-    JAVA_EDITION="javase" \
-    RUNTIMES_URL="http://j9.ottawa.ibm.com/j9dt/incubator/virt/dhe/ibmruntimes/java/"
+    JAVA_PACKAGE="jre" \
+    JAVA_TYPE="javase" \
+    BASE_URL="http://j9.ottawa.ibm.com/j9dt/incubator/virt/dhe/ibmruntimes/java/"
 
 # Install JRE if the downloaded md5sum matches what is available in the .yml file
-RUN TARCH=$(uname -p) \
+RUN TARGET_ARCH=$(uname -p) \
     && JAVA_VRMF=$JAVA_VERSION.$JAVA_RMF \
-    && YML_FILENAME=ibm-java-$JAVA_TYPE-$JAVA_VERSION.$JAVA_RMF-linux-$TARCH-$JAVA_EDITION.yml \
-    && wget -q -O /tmp/$YML_FILENAME $RUNTIMES_URL/$JAVA_VERSION/$YML_FILENAME \
+    && YML_FILENAME=ibm-java-$JAVA_PACKAGE-$JAVA_VERSION.$JAVA_RMF-linux-$TARGET_ARCH-$JAVA_TYPE.yml \
+    && wget -q -O /tmp/$YML_FILENAME $BASE_URL/$JAVA_VERSION/$YML_FILENAME \
     && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
     && wget -q $JAVA_URL -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin \
     && ESUM=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/,/md5sum/p' | sed -n 's/\s*md5sum:\s//p' | tr -d '\r') \
