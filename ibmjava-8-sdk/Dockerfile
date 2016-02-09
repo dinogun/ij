@@ -21,25 +21,26 @@ RUN apt-get update \
     && apt-get install -y wget unzip \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION=8 \
-    JAVA_RMF=0.2.0 \
+ENV JAVA_VER=8 \
+    JAVA_REL=0 \
+    JAVA_MF=2.10 \
     JAVA_PACKAGE="sdk" \
     JAVA_TYPE="javase" \
-    BASE_URL="http://j9.ottawa.ibm.com/j9dt/incubator/virt/dhe/ibmruntimes/java/"
+    BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta"
 
 # Install JRE if the downloaded md5sum matches what is available in the .yml file
-RUN TARGET_ARCH=$(uname -p) \
-    && JAVA_VRMF=$JAVA_VERSION.$JAVA_RMF \
-    && YML_FILENAME=ibm-java-$JAVA_PACKAGE-$JAVA_VERSION.$JAVA_RMF-linux-$TARGET_ARCH-$JAVA_TYPE.yml \
-    && wget -q -O /tmp/$YML_FILENAME $BASE_URL/$JAVA_VERSION/$YML_FILENAME \
-    && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
-    && wget -q $JAVA_URL -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin \
-    && ESUM=$(cat /tmp/$YML_FILENAME | sed -n '/'$JAVA_VRMF'/,/md5sum/p' | sed -n 's/\s*md5sum:\s//p' | tr -d '\r') \
+RUN TARGET_ARCH=$(uname -i) \
+    && JAVA_VRMF=$JAVA_VER.$JAVA_REL-$JAVA_MF \
+    && YML_FILENAME=ibm-java-$JAVA_PACKAGE-$JAVA_VRMF-linux-$TARGET_ARCH-$JAVA_TYPE.yml \
+    && wget -q -U UA-IBM_JAVA_Docker -O /tmp/$YML_FILENAME $BASE_URL/$JAVA_VER$JAVA_REL/$YML_FILENAME \
+    && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
+    && wget -q -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin $JAVA_URL \
+    && ESUM=$(cat /tmp/$YML_FILENAME | sed -n 's/\s*md5sum:\s//p' | tr -d '\r') \
     && echo "$ESUM /tmp/ibm-java.bin" | md5sum -c - \
     && echo "INSTALLER_UI=silent" > /tmp/response.properties \
     && echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties \
     && echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties \
-    && mkdir /opt/ibm \
+    && mkdir -p /opt/ibm \
     && chmod +x /tmp/ibm-java.bin \
     && /tmp/ibm-java.bin -i silent -f /tmp/response.properties \
     && rm -f /tmp/response.properties \
@@ -50,5 +51,5 @@ ENV JAVA_HOME=/opt/ibm/java \
 
 COPY run_java.sh /usr/local/bin/
 
-CMD ["/usr/local/bin/run_java.sh"]
+ENTRYPOINT ["/usr/local/bin/run_java.sh"]
 
