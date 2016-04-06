@@ -29,9 +29,9 @@ ENV JAVA_VER=8 \
     BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta"
 
 # Install JRE if the downloaded md5sum matches what is available in the .yml file
-RUN TARGET_ARCH=$(uname -i) \
-    && JAVA_VRMF=$JAVA_VER.$JAVA_REL-$JAVA_MF \
-    && YML_FILENAME=ibm-java-$JAVA_PACKAGE-$JAVA_VRMF-linux-$TARGET_ARCH-$JAVA_TYPE.yml \
+RUN TARGET_ARCH=$(uname -m) \
+    && JAVA_VRMF=$JAVA_VERSION.$JAVA_RMF \
+    && YML_FILENAME=ibm-java-$JAVA_PACKAGE-$JAVA_VER.$JAVA_REL-$JAVA_MF-linux-$TARGET_ARCH-$JAVA_TYPE.yml \
     && wget -q -U UA-IBM_JAVA_Docker -O /tmp/$YML_FILENAME $BASE_URL/$JAVA_VER$JAVA_REL/$YML_FILENAME \
     && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
     && wget -q -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin $JAVA_URL \
@@ -52,4 +52,3 @@ ENV JAVA_HOME=/opt/ibm/java \
 COPY run_java.sh /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/run_java.sh"]
-

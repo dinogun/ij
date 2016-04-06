@@ -1,5 +1,6 @@
 #!/bin/sh
 
+set -e
 
 # This script takes a .jar file has an argument.
 # The .jar file needs to be in a volume mounted at /opt/app
@@ -23,8 +24,11 @@ do
 	esac
 done
 
-# No .jar parameter passed, just print the java version and exit
-/opt/ibm/java/jre/bin/java -version
+# Run whatever the user wanted like "bash"
+exec "$@"
+
+# No .jar parameter passed, just print the javac version and exit
+# /opt/ibm/java/jre/bin/javac -version
 
 # The following are -X options for optimizing IBM Java.
 
