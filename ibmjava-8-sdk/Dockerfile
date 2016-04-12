@@ -26,16 +26,16 @@ ENV JAVA_VER=8 \
     JAVA_MF=2.10 \
     JAVA_PACKAGE="sdk" \
     JAVA_TYPE="javase" \
+    TARGET_ARCH="x86_64" \
+    ESUM="698efce70cec95d4b32bf9c7edbe4d2c" \
     BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta"
 
 # Install JRE if the downloaded md5sum matches what is available in the .yml file
-RUN TARGET_ARCH=$(uname -m) \
-    && JAVA_VRMF=$JAVA_VER.$JAVA_REL-$JAVA_MF \
+RUN JAVA_VRMF=$JAVA_VER.$JAVA_REL-$JAVA_MF \
     && YML_FILENAME=ibm-java-$JAVA_PACKAGE-$JAVA_VRMF-linux-$TARGET_ARCH-$JAVA_TYPE.yml \
     && wget -q -U UA-IBM_JAVA_Docker -O /tmp/$YML_FILENAME $BASE_URL/$JAVA_VER$JAVA_REL/$YML_FILENAME \
     && JAVA_URL=$(cat /tmp/$YML_FILENAME | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
     && wget -q -U UA-IBM-JAVA-Docker -O /tmp/ibm-java.bin $JAVA_URL \
-    && ESUM=$(cat /tmp/$YML_FILENAME | sed -n 's/\s*md5sum:\s//p' | tr -d '\r') \
     && echo "$ESUM /tmp/ibm-java.bin" | md5sum -c - \
     && echo "INSTALLER_UI=silent" > /tmp/response.properties \
     && echo "USER_INSTALL_DIR=/opt/ibm/java" >> /tmp/response.properties \
@@ -46,9 +46,10 @@ RUN TARGET_ARCH=$(uname -m) \
     && rm -f /tmp/response.properties \
     && rm -f /tmp/ibm-java.bin
 
-ENV JAVA_HOME=/opt/ibm/java \
-    PATH=/opt/ibm/java/jre/bin:$PATH
+ENV JAVA_HOME=/opt/ibm/java/jre \
+    PATH=/opt/ibm/java/bin:$PATH
 
 COPY run_java.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/run_java.sh
 
 ENTRYPOINT ["/usr/local/bin/run_java.sh"]
