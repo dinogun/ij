@@ -17,17 +17,18 @@ FROM ubuntu:14.04
 
 MAINTAINER Dinakar Guniguntala <dinakar.g@in.ibm.com> (@dinogun)
 
+# Install some 32bit compatibility libraries to run 32bit Java
 RUN apt-get update \
-    && apt-get install -y wget unzip \
+    && apt-get install -y wget unzip lib32z1 lib32ncurses5 lib32bz2-1.0 lib32gcc1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_VER=8 \
     JAVA_REL=0 \
     JAVA_MF=2.10 \
-    JAVA_PACKAGE="sdk" \
+    JAVA_PACKAGE="jre" \
     JAVA_TYPE="javase" \
-    TARGET_ARCH="x86_64" \
-    ESUM="698efce70cec95d4b32bf9c7edbe4d2c" \
+    TARGET_ARCH="i386" \
+    ESUM="a4bcb81e354d8ebd7edb28da39fbec32" \
     BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta"
 
 # Install JRE if the downloaded md5sum matches what is available in the .yml file
@@ -47,9 +48,4 @@ RUN JAVA_VRMF=$JAVA_VER.$JAVA_REL-$JAVA_MF \
     && rm -f /tmp/ibm-java.bin
 
 ENV JAVA_HOME=/opt/ibm/java/jre \
-    PATH=/opt/ibm/java/bin:$PATH
-
-COPY run_java.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/run_java.sh
-
-ENTRYPOINT ["/usr/local/bin/run_java.sh"]
+    PATH=/opt/ibm/java/jre/bin:$PATH
