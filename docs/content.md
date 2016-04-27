@@ -1,6 +1,6 @@
 # Overview
 
-The images in this repository contain IBM® SDK, Java™ Technology Edition. See the license section below for restrictions relating to the use of this image. For more information about IBM® SDK, Java™ Technology Edition, see the [Java developerWorks site](http://www.ibm.com/developerworks/java) and [documentation](http://www.ibm.com/developerworks/java/jdk/docs.html).
+The images in this repository contain IBM® SDK, Java™ Technology Edition. See the license section below for restrictions relating to the use of this image. For more information about IBM® SDK, Java™ Technology Edition and API documentation, go [here](http://www.ibm.com/developerworks/java/jdk/docs.html). For tutorials, recipes and Java usage in Bluemix, go [here](http://www.ibm.com/developerworks/java).
 
 Java is a registered trademark of Oracle and/or its affiliates.
 
