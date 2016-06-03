@@ -4,11 +4,11 @@ Official IBM® SDK, Java™ Technology Edition Docker Image.
 
 ### Supported tags and respective `Dockerfile` links
 
--	[`8-sdk`, `sdk` (*ibmjava/8-sdk/x86_64/ubuntu/Dockerfile*)](https://github.com/ibmruntimes/ci.docker/blob/master/ibmjava/8-sdk/x86_64/ubuntu/Dockerfile)
--	[`8-jre`, `jre`, `8`, `latest` (*ibmjava/8-jre/x86_64/ubuntu/Dockerfile*)](https://github.com/ibmruntimes/ci.docker/blob/master/ibmjava/8-jre/x86_64/ubuntu/Dockerfile)
--	[`8-jre-alpine`, `jre-alpine` (*ibmjava/8-jre/x86_64/alpine/Dockerfile*)](https://github.com/ibmruntimes/ci.docker/blob/master/ibmjava/8-jre/x86_64/alpine/Dockerfile)
--	[`8-sfj`, `sfj` (*ibmjava/8-sfj/x86_64/ubuntu/Dockerfile*)](https://github.com/ibmruntimes/ci.docker/blob/master/ibmjava/8-sfj/x86_64/ubuntu/Dockerfile)
--	[`8-sfj-alpine`, `sfj-alpine` (*ibmjava/8-sfj/x86_64/alpine/Dockerfile*)](https://github.com/ibmruntimes/ci.docker/blob/master/ibmjava/8-sfj/x86_64/alpine/Dockerfile)
+-	[`8-sdk`, `sdk` (*ibmjava/8-sdk/x86_64/ubuntu/Dockerfile*)](https://github.com/dinogun/ij/blob/master/ibmjava/8-sdk/x86_64/ubuntu/Dockerfile)
+-	[`8-jre`, `jre`, `8`, `latest` (*ibmjava/8-jre/x86_64/ubuntu/Dockerfile*)](https://github.com/dinogun/ij/blob/master/ibmjava/8-jre/x86_64/ubuntu/Dockerfile)
+-	[`8-jre-alpine`, `jre-alpine` (*ibmjava/8-jre/x86_64/alpine/Dockerfile*)](https://github.com/dinogun/ij/blob/master/ibmjava/8-jre/x86_64/alpine/Dockerfile)
+-	[`8-sfj`, `sfj` (*ibmjava/8-sfj/x86_64/ubuntu/Dockerfile*)](https://github.com/dinogun/ij/blob/master/ibmjava/8-sfj/x86_64/ubuntu/Dockerfile)
+-	[`8-sfj-alpine`, `sfj-alpine` (*ibmjava/8-sfj/x86_64/alpine/Dockerfile*)](https://github.com/dinogun/ij/blob/master/ibmjava/8-sfj/x86_64/alpine/Dockerfile)
 
 
 ### Overview
@@ -112,7 +112,7 @@ Licenses for the products installed within the images:
 
 #### Issues
 
-For issues relating specifically to this Docker image, please use the [GitHub issue tracker](https://github.com/ibmruntimes/ci.docker/issues).
+For issues relating specifically to this Docker image, please use the [GitHub issue tracker](https://github.com/dinogun/ij/issues).
 
 For more general issues relating to IBM® SDK, Java™ Technology Edition you can ask questions in the developerWorks forum: [IBM Java Runtimes and SDKs](https://www.ibm.com/developerworks/community/forums/html/forum?id=11111111-0000-0000-0000-000000000367).
 
