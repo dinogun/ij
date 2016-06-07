@@ -18,15 +18,21 @@ set -o pipefail
 
 function usage() {
 	echo
-	echo "Usage: $0 [-l] [-n] [-v <8>] [-s source_repo] [-t <ibmcom|ppc64le|s390x>]"
+	echo "Usage: $0 [-h] [-l] [-n] [-v <8>] [-s source_repo] [-t <ibmcom|ppc64le|s390x>]"
 	echo " l = use local source, n = no push to remote. "
 	exit 1
 }
 
+dver=`docker version 2>/dev/null`
+if [ $? != 0 ]; then
+	echo "ERROR: Docker command is running in unprivileged mode."
+	echo "       Run Docker with sudo privileges or make sure the userid is part of the docker group."
+	exit 1
+fi
+
 machine=`uname -m`
 version="8"
 packages="sfj jre sdk"
-pull_repo="dinogun/ij"
 push_repo="ibmjava"
 
 nopush=0
@@ -34,18 +40,18 @@ nopush=0
 # Setup defaults for source and target repos based on the current machine arch.
 case $machine in
 x86_64)
-	source_repo=$pull_repo
+	source_repo="dinogun/ij"
 	tprefix="ibmcom"
 	remote=1
 	;;
 s390x)
-	source_repo="s390x/$pull_repo"
+	source_repo="s390x/j9"
 	tprefix="s390x"
 	# No remote repos to pull from for s390x
 	remote=0
 	;;
 ppc64le)
-	source_repo="ppc64le/$pull_repo"
+	source_repo="ppc64le/j9"
 	tprefix="ppc64le"
 	# No remote repos to pull from for ppc64le
 	remote=0
@@ -56,7 +62,7 @@ default)
 	;;
 esac
 
-while getopts lns:t:v: opts
+while getopts hlns:t:v: opts
 do
 	case $opts in
 	l)
