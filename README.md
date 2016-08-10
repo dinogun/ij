@@ -13,7 +13,7 @@ Official IBM® SDK, Java™ Technology Edition Docker Image.
 
 ### Overview
 
-The images in this repository contain IBM® SDK, Java™ Technology Edition. See the license section for restrictions that relate to the use of this image. For more information about IBM® SDK, Java™ Technology Edition and API documentation, see the [IBM Knowledge Center](http://www.ibm.com/support/knowledgecenter/SSYKE2/welcome_javasdk_family.html). For tutorials, recipes, and Java usage in Bluemix, see [IBM developerWorks](http://www.ibm.com/developerworks/java).
+The images in this repository contain IBM® SDK, Java™ Technology Edition version 1.8.0\_sr3fp10 (8.0-3.10). See [what's new](http://www.ibm.com/support/knowledgecenter/SSYKE2_8.0.0/com.ibm.java.lnx.80.doc/diag/preface/changes_80/whatsnew_sr3fp10.html). See the license section for restrictions that relate to the use of this image. For more information about IBM® SDK, Java™ Technology Edition and API documentation, see the [IBM Knowledge Center](http://www.ibm.com/support/knowledgecenter/SSYKE2/welcome_javasdk_family.html). For tutorials, recipes, and Java usage in Bluemix, see [IBM developerWorks](http://www.ibm.com/developerworks/java).
 
 Java and all Java-based trademarks and logos are trademarks or registered trademarks of Oracle and/or its affiliates.
 
@@ -35,6 +35,12 @@ Consider using [Alpine Linux](http://alpinelinux.org/) if you are concerned abou
 | 300 MB | 184 MB | 218 MB | 102 MB |
 
 **Note: Alpine Linux is not an officially supported operating system for IBM® SDK, Java™ Technology Edition.**
+
+##### Architectures Supported
+
+In addition to the x86\_64 images, [ppc64le](https://hub.docker.com/r/ppc64le/ibmjava/) and [s390x](https://hub.docker.com/r/s390x/ibmjava/) images are available as well.
+
+### How to use this Image
 
 To run a pre-built jar file with the JRE image, use the following commands:
 
