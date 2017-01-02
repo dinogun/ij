@@ -16,7 +16,7 @@
 #
 #####################################################################################
 #                                                                                   #
-#  Script to verify a WebSphere Liberty image                                       #
+#  Script to verify a IBM® SDK, Java™ Technology Edition                            #
 #                                                                                   #
 #                                                                                   #
 #  Usage : verify.sh <Image name>                                                   #
@@ -35,7 +35,7 @@ fi
 testJavaVersion()
 {
    docker run --rm $image java -version 2>testvers.log
-   comparison=$(diff -u testvers.log "version-info/$tag.txt")
+   comparison=$(diff -u testvers.log "$PWD/version-info/$tag.txt")
 
    if [ $? != 0 ]
    then

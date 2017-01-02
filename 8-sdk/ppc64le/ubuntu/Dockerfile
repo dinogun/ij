@@ -27,9 +27,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends wget ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION 1.8.0_sr3fp10
+ENV JAVA_VERSION 1.8.0_sr3fp22
 
-RUN ESUM="d83f8eb5166a3ba0ceff204a51a39d0780d266ab673322e0390254307c9cb97b" \
+RUN ESUM="2eb37f5392f8dd4df4fd5ca874a81ce06cab93c7ff7000b537476accd8e5b727" \
     && BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/" \
     && YML_FILE="sdk/linux/ppc64le/index.yml" \
     && wget -q -U UA_IBM_JAVA_Docker -O /tmp/index.yml $BASE_URL/$YML_FILE \
