@@ -51,8 +51,12 @@ declare -A sfj_8_sums=(
 )
 
 declare -A sdk_9_sums=(
-	[version]="1.9.0_beta1u1"
-	[x86_64]="462789c092d461a7772a53249e5b2865c0535a6e6ca8e506605f739be990854a"
+	[version]="1.9.0_ea2"
+	[i386]="5add39cc5ca56b97cf8ce71b9e1a15d19d36864aaed1e0296f50355ba3f34bd5"
+	[ppc64le]="3c0dda9f449a667d12fe5f59a1ec059a90a9dc483fd35eef5ff53dd8b096cdf5"
+	[s390]="8d06af57d8236839f5c403c12dcf4c89e22dd91716a4d26b85c8d92f6d1e2e8b"
+	[s390x]="6e823afa1df83e364381f827f4244bfe29b0ddd58ef0203eb60df9b8c0d123af"
+	[x86_64]="0fe3712b54a93695cf4948d9ae171bf5cef038c0e41b364b4e9eb7cb80a60688"
 )
 
 # Generate the common license and copyright header
@@ -232,11 +236,19 @@ EOI
 
 print_java_env() {
 if [ "$pack" == "sdk" ]; then
-	cat >> $1 <<'EOI'
+	if [ "$ver" == "8" ]; then
+		cat >> $1 <<'EOI'
 
 ENV JAVA_HOME=/opt/ibm/java/jre \
     PATH=/opt/ibm/java/bin:$PATH
 EOI
+	elif [ "$ver" == "9" ]; then
+		cat >> $1 <<'EOI'
+
+ENV JAVA_HOME=/opt/ibm/java \
+    PATH=/opt/ibm/java/bin:$PATH
+EOI
+	fi
 else
 	cat >> $1 <<'EOI'
 
@@ -297,7 +309,7 @@ do
 					fi
 				elif [ "$ver" == "9" ]; then
 					# For now Java 9 betas images are only available for SDK
-					if [ "$os" == "ubuntu" -a "$arch" == "x86_64" -a "$pack" == "sdk" ]; then
+					if [ "$os" == "ubuntu" -a "$pack" == "sdk" ]; then
 						generate_ubuntu $file
 					fi
 				fi

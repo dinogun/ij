@@ -6,3 +6,5 @@ dinogun/ij:8-sdk         ../8-sdk/x86_64/ubuntu
 i386/dinogun/ij:8-sfj    ../8-sfj/i386/ubuntu
 i386/dinogun/ij:8-jre    ../8-jre/i386/ubuntu
 i386/dinogun/ij:8-sdk    ../8-sdk/i386/ubuntu
+dinogun/ij:9-sdk         ../9-sdk/x86_64/ubuntu
+i386/dinogun/ij:9-sdk    ../9-sdk/i386/ubuntu
