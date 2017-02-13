@@ -17,7 +17,7 @@
 set -eo pipefail
 
 # Docker Images to be generated
-version="9"
+version="8 9"
 package="jre sdk sfj"
 osver="ubuntu alpine"
 
