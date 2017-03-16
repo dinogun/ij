@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# (C) Copyright IBM Corporation 2016.
+# (C) Copyright IBM Corporation 2016, 2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@ nopush=0
 # Setup defaults for source and target repos based on the current machine arch.
 case $machine in
 x86_64)
-	source_repo="dinogun/ij"
+	source_repo="j9"
 	tprefix="ibmcom"
-	remote=1
+	remote=0
 	;;
 s390x)
 	source_repo="s390x/j9"
