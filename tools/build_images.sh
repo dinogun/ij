@@ -20,6 +20,9 @@ set -eo pipefail
 version="8 9"
 package="jre sdk sfj"
 osver="ubuntu alpine"
+unset tools
+
+build_failed=0
 
 dver=`docker version 2>/dev/null`
 if [ $? != 0 ]; then
@@ -35,6 +38,7 @@ x86_64)
 	# No need for i386 builds for now
 	# arches="i386 x86_64"
 	arches="x86_64"
+	tools="maven"
 	;;
 s390x)
 	# No support for s390 Docker Images for now, only s390x.
@@ -62,6 +66,13 @@ function timediff() {
 
 function getdate() {
 	date "+%Y-%m-%d %H:%M:%S"
+}
+
+function cleanup_logs() {
+	echo -n "Removing old log files..."
+	find .. -name "*.out" -exec rm -f {} \;
+	find .. -name "*.err" -exec rm -f {} \;
+	echo "done"
 }
 
 function build_image() {
@@ -93,8 +104,33 @@ function check_build_status() {
 	fi
 }
 
+function wait_for_build_complete() {
+	echo
+	sleep 2
+	status=$(check_build_status)
+	while [[ "$status" == *"build(s) ongoing"* ]];
+	do
+		echo "Status = $status"
+		sleep 10
+		status=$(check_build_status)
+	done
+	edate=$(getdate)
+	tdiff=$(timediff "$sdate" "$edate")
+	if [[ "$status" == *"build(s) failed"* ]]; then
+		build_failed=1
+	fi
+	echo
+	echo "############################################"
+	echo "Status    : $status"
+	printf "Time taken: %02d:%02d mins\n" "$((tdiff/60))" "$((tdiff%60))"
+	echo "############################################"
+	echo
+}
+
+cleanup_logs
+
 echo
-echo "Starting docker image builds in parallel..."
+echo "Starting ibmjava docker image builds in parallel..."
 # Iterate through all the Dockerfiles and build the right ones
 sdate=$(getdate)
 for ver in $version
@@ -105,7 +141,7 @@ do
 		do
 			for os in $osver
 			do
-				file="$rootdir/$ver-$pack/$arch/$os/Dockerfile"
+				file="$rootdir/$ver/$pack/$arch/$os/Dockerfile"
 				if [ ! -f $file ]; then
 					continue;
 				fi
@@ -131,19 +167,33 @@ do
 	done
 done
 
+wait_for_build_complete
+
+if [ $build_failed -eq 1 ]; then
+	echo
+	echo "Not building tool images as earlier builds failed"
+	exit -1;
+fi
+
 echo
-status=$(check_build_status)
-while [[ "$status" == *"build(s) ongoing"* ]];
+echo "Starting tools docker image builds in parallel..."
+# Tools are only built on x86_64, on other arches this is a no-op
+sdate=$(getdate)
+for ver in $version
 do
-	echo "Status = $status"
-	sleep 10
-	status=$(check_build_status)
+	for tool in $tools
+	do
+		file="$rootdir/$ver/$tool/Dockerfile"
+		if [ ! -f $file ]; then
+			continue;
+		fi
+		ddir=`dirname $file`
+		logfile=`basename $file`
+		pushd $ddir >/dev/null
+		image_name=$baseimage:$ver-$tool
+		build_image $image_name $logfile
+		popd >/dev/null
+	done
 done
-edate=$(getdate)
-tdiff=$(timediff "$sdate" "$edate")
-echo
-echo "############################################"
-echo "Status    : $status"
-printf "Time taken: %02d:%02d mins\n" "$((tdiff/60))" "$((tdiff%60))"
-echo "############################################"
-echo
+
+wait_for_build_complete

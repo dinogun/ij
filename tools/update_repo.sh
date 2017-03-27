@@ -18,8 +18,15 @@ set -o pipefail
 
 function usage() {
 	echo
-	echo "Usage: $0 [-h] [-l] [-n] [-v <8>] [-s source_repo] [-t <ibmcom|ppc64le|s390x>]"
-	echo " l = use local source, n = no push to remote. "
+	echo "Usage: $0 [-h] [-i <java|tools|both>] [-l] [-n] [-v <8|9>] [-s source_repo] [-t <ibmcom|ppc64le|s390x>]"
+	echo " h = help. "
+	echo " i = Images to be pushed: 'java' only, 'tools' only, default = 'both'. "
+	echo " l = use local source. "
+	echo " n = no push to remote. "
+	echo " s = source repo, default = j9. "
+	echo " t = target repo, default = ibmcom. "
+	echo " v = version of binaries to push. "
+	echo
 	exit 1
 }
 
@@ -31,11 +38,12 @@ if [ $? != 0 ]; then
 fi
 
 machine=`uname -m`
-version="8"
-packages="sfj jre sdk"
 push_repo="ibmjava"
-
 nopush=0
+
+unset jver
+tools="maven"
+image="both"
 
 # Setup defaults for source and target repos based on the current machine arch.
 case $machine in
@@ -62,9 +70,14 @@ default)
 	;;
 esac
 
-while getopts hlns:t:v: opts
+while getopts hi:lns:t:v: opts
 do
 	case $opts in
+	i)
+		# which images to push.
+		image="$OPTARG"
+		[[ $image == "java" || $image == "tools"  || $image == "both" ]] || usage
+		;;
 	l)
 		# Use local repo instead of pulling from remote source.
 		remote=0
@@ -80,12 +93,12 @@ do
 	t)
 		# Push to given target PREFIX
 		tprefix="$OPTARG"
-		[[ tprefix == "ibmcom" || tprefix == "ppc64le" || tprefix == "s390x" ]] || usage
+		[[ $tprefix == "ibmcom" || $tprefix == "ppc64le" || $tprefix == "s390x" ]] || usage
 		;;
 	v)
 		# Update only provided version
-		version="$OPTARG"
-		((version == 8)) || usage
+		jver="$OPTARG"
+		((jver == 8 || jver == 9)) || usage
 		;;
 	*)
 		usage
@@ -102,9 +115,9 @@ function log {
 
 log
 if [ $remote -eq 1 ]; then
-	log "####[I]: Push Java $version docker images from $source_repo to $target_repo"
+	log "####[I]: Push docker images from $source_repo to $target_repo"
 else
-	log "####[I]: Push Java $version docker images from local to $target_repo"
+	log "####[I]: Push docker images from local to $target_repo"
 fi
 log
 
@@ -169,49 +182,76 @@ function get_source_image() {
 }
 
 function update_target() {
-	version=$1
-	package=$2
-	tag=$1-$2
+	stag=$1
+	ttag=$2
 	
-	# Download the source image with the given tag locally. 
-	get_source_image $source_repo $tag
-
-	# Create target images locally with the tags, $tag and $package for all (JRE, SDK & SFJ).
-	retag $tag $tag
-	retag $tag $package
-
-	# Push it to the remote repo.
-	push_target $tag
-	push_target $package
-
-	# For JRE alone push images with $version and latest tags.
-	if [ $package == "jre" ]; then
-		retag $tag $version
-		retag $tag latest
-
-		push_target $version
-		push_target latest
-	fi
-
-	# Pull, create and push Alpine images on x86_64 for both JRE and SFJ.
-	if [ $machine == "x86_64" ]; then
-		if [ $package == "jre" -o $package == "sfj" ]; then
-			get_source_image $source_repo $tag-alpine
-
-			retag $tag-alpine $tag-alpine
-			retag $tag-alpine $package-alpine
-
-			push_target $tag-alpine
-			push_target $package-alpine
+	# Ignore alpine on non x86_64
+	if [[ "$stag" == *alpine ]]; then
+		if [ $machine != "x86_64" ]; then
+			return;
 		fi
 	fi
+
+	# Download the source image with the given tag locally. 
+	get_source_image $source_repo $stag
+
+	retag $stag $ttag
+
+	# Push it to the remote repo.
+	push_target $ttag
 }
 
-# Update remote target repo for all packages.
-for pack in $packages
-do
-	update_target $version $pack
-done
+# Parse the tags array and create and push the target.
+# The first entry on each line represents a tag that has already been created
+# by the build script. Eg. See the following entry in java_tags.txt
+# 8-jre jre 8 latest
+# j9:8-jre is a docker image that build_images.sh would have already created.
+# We now need to create images with the following tags
+# ibmcom/ibmjava:8-jre
+# ibmcom/ibmjava:jre
+# ibmcom/ibmjava:8
+# ibmcom/ibmjava:latest
+# 8-jre is the base image and the rest are additional tags for the same image.
+function parse_array() {
+	for i in `seq 0 $(( ${#tagsarray[@]} - 1 ))`
+	do
+		declare -a imagearray=( ${tagsarray[$i]} )
+		# Create the tag for the base image and push it.
+		update_target ${imagearray[0]} ${imagearray[0]}
+
+		# Create any additional tags for the base image and push them.
+		for j in `seq 1 $(( ${#imagearray[@]} - 1 ))`
+		do
+			update_target ${imagearray[0]} ${imagearray[$j]}
+		done
+	done
+}
+
+# Read the tags file. The tags file consists of multiple entries per line that
+# each represents a tag to be created and pushed to the target repo.
+# Read only the relevant versions if specified, else read the entire tags file.
+function read_file() {
+	file=$1
+
+	if [ ! -z "$jver" ]; then
+		readarray tagsarray <<< "$(cat $file | grep "^$jver")"
+	else
+		readarray tagsarray < $file
+	fi
+	parse_array
+}
+
+# Read from the tags file and create and array of tags to be created and pushed.
+# java_tags.txt consists of all tags for various java versions.
+# tool_tags.txt consists of all tags for various tools and related versions.
+if [ $image == "java" ]; then
+	read_file java_tags.txt
+elif [ $image == "tools" ]; then
+	read_file tool_tags.txt
+else
+	read_file java_tags.txt
+	read_file tool_tags.txt
+fi
 
 log
 log "See $logfile for more details"
