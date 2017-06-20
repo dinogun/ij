@@ -19,25 +19,24 @@
 # limitations under the License.
 #
 
-FROM alpine:3.4
+FROM alpine:3.6
 
 MAINTAINER Dinakar Guniguntala <dinakar.g@in.ibm.com> (@dinogun)
 
-RUN apk --update add --no-cache openssl ca-certificates \
-    && GLIBC_VER="2.23-r3" \
+RUN apk --update add --no-cache openssl ca-certificates xz \
+    && GLIBC_VER="2.25-r0" \
     && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
     && wget -q -O /tmp/$GLIBC_VER.apk $ALPINE_GLIBC_REPO/$GLIBC_VER/glibc-$GLIBC_VER.apk \
     && apk add --allow-untrusted /tmp/$GLIBC_VER.apk \
-    && apk --update add xz \
     && wget -q -O /tmp/gcc-libs.tar.xz https://www.archlinux.org/packages/core/x86_64/gcc-libs/download \
     && mkdir /tmp/gcc \
     && tar -xf /tmp/gcc-libs.tar.xz -C /tmp/gcc \
     && mv /tmp/gcc/usr/lib/libgcc* /usr/glibc-compat/lib \
     && rm -rf /tmp/$GLIBC_VER.apk /tmp/gcc /tmp/gcc-libs.tar.xz /var/cache/apk/*
 
-ENV JAVA_VERSION 1.8.0_sr4fp1
+ENV JAVA_VERSION 1.8.0_sr4fp6
 
-RUN ESUM="1f8e4b9c0d03457703c17d54d1ac939696fe8d027da57d47a347833d8cafdc90" \
+RUN ESUM="1d60fb97c4c30c7209b4792d22d0d4a9a6239db97adc647413bad722cada535c" \
     && BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/" \
     && YML_FILE="jre/linux/x86_64/index.yml" \
     && wget -q -U UA_IBM_JAVA_Docker -O /tmp/index.yml $BASE_URL/$YML_FILE \

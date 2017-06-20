@@ -19,19 +19,26 @@
 # limitations under the License.
 #
 
-FROM i386/ubuntu:16.04
+FROM alpine:3.6
 
 MAINTAINER Dinakar Guniguntala <dinakar.g@in.ibm.com> (@dinogun)
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends wget ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk --update add --no-cache openssl ca-certificates xz \
+    && GLIBC_VER="2.25-r0" \
+    && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
+    && wget -q -O /tmp/$GLIBC_VER.apk $ALPINE_GLIBC_REPO/$GLIBC_VER/glibc-$GLIBC_VER.apk \
+    && apk add --allow-untrusted /tmp/$GLIBC_VER.apk \
+    && wget -q -O /tmp/gcc-libs.tar.xz https://www.archlinux.org/packages/core/x86_64/gcc-libs/download \
+    && mkdir /tmp/gcc \
+    && tar -xf /tmp/gcc-libs.tar.xz -C /tmp/gcc \
+    && mv /tmp/gcc/usr/lib/libgcc* /tmp/gcc/usr/lib/libstdc++* /usr/glibc-compat/lib \
+    && rm -rf /tmp/$GLIBC_VER.apk /tmp/gcc /tmp/gcc-libs.tar.xz /var/cache/apk/*
 
-ENV JAVA_VERSION 1.8.0_sr4fp6
+ENV JAVA_VERSION 1.9.0_ea2
 
-RUN ESUM="2e77fb857fc407416ed69ed7ebc3fb5744d677236370b529f00e25dd0abb9596" \
+RUN ESUM="0fe3712b54a93695cf4948d9ae171bf5cef038c0e41b364b4e9eb7cb80a60688" \
     && BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/" \
-    && YML_FILE="sfj/linux/i386/index.yml" \
+    && YML_FILE="sdk/linux/x86_64/index.yml" \
     && wget -q -U UA_IBM_JAVA_Docker -O /tmp/index.yml $BASE_URL/$YML_FILE \
     && JAVA_URL=$(cat /tmp/index.yml | sed -n '/'$JAVA_VERSION'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r') \
     && wget -q -U UA_IBM_JAVA_Docker -O /tmp/ibm-java.bin $JAVA_URL \
@@ -46,5 +53,5 @@ RUN ESUM="2e77fb857fc407416ed69ed7ebc3fb5744d677236370b529f00e25dd0abb9596" \
     && rm -f /tmp/index.yml \
     && rm -f /tmp/ibm-java.bin
 
-ENV JAVA_HOME=/opt/ibm/java/jre \
-    PATH=/opt/ibm/java/jre/bin:$PATH
+ENV JAVA_HOME=/opt/ibm/java \
+    PATH=/opt/ibm/java/bin:$PATH

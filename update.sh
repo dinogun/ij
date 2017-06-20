@@ -25,30 +25,30 @@ osver="ubuntu alpine"
 
 # sha256sum for the various versions, packages and arches
 declare -A jre_8_sums=(
-	[version]="1.8.0_sr4fp1"
-	[i386]="759f03c969f0feffdb2b395fa8876ea1b750db90bed0688f8d10ce97e33348df"
-	[ppc64le]="1b0e5f3e0d95367836d7a0bdb30314dd6a820df06ef4eb6d160014cf57ea4b30"
-	[s390]="7ba77b232149ac5188b33f81b365173d0570cf044d41b5a493eddcab92de159b"
-	[s390x]="990e5472d22fff69c2d862b1ee38056cb1dd127043b2173da81a3e93e63959d0"
-	[x86_64]="1f8e4b9c0d03457703c17d54d1ac939696fe8d027da57d47a347833d8cafdc90"
+	[version]="1.8.0_sr4fp6"
+	[i386]="211990d9b1ae697f31a8efed75fe55a6cc8fa4a60b067da68a772358e9aed31b"
+	[ppc64le]="ec4183a09fd1e2b83463cf0795f7e85bc45dbddff08ed40f355fa3803e4f29da"
+	[s390]="fff9c2871e19664217c736eb3bc92d98b9ff3d6084980080947562b4025d5e40"
+	[s390x]="93260c4b8aacce25f3fbcf4f0a020102ea1c91053be75129d9f6876cd81ce633"
+	[x86_64]="1d60fb97c4c30c7209b4792d22d0d4a9a6239db97adc647413bad722cada535c"
 )
 
 declare -A sdk_8_sums=(
-	[version]="1.8.0_sr4fp1"
-	[i386]="02588e0494f5d091a9e0602e054af2d733f1fd01432192b5733fb95be4c8e964"
-	[ppc64le]="81ee611d981f0edd60f0ca5543aebcd93a73ef6f40aeda01a48a337661fb85e6"
-	[s390]="610e7a6d5bef62f53fa0057598b441c37d2e8a023fd40d91d5698b73ff9a783b"
-	[s390x]="c09151dc9111636145525267569632287ed5f4788cfda43da3a444d4fafad183"
-	[x86_64]="2b4377c4a8b6934a17ee8e2ec673b4a3d3b97f0b568ef5e20a6ea2e676345bf3"
+	[version]="1.8.0_sr4fp6"
+	[i386]="bb5e117294b6394a6f87822c6a6e4cc71b3313bf847207dc3ebbf6a9dade711a"
+	[ppc64le]="8e9d8220f6ed0bf525436ee6bb263cc27928f2795742198442c479ae71cff9d3"
+	[s390]="7a373740218f3a8e37672967efce2f07cdd668c89267b8b5cf2d92e2bd1d33fc"
+	[s390x]="23682613bc09c3ab48c724e2c9fda3554007f670b6b495129b1a603d6604957c"
+	[x86_64]="d5b1f62eb8db7ce1ccf80165cd27c3c4e21d3ccf5c86dbd6b1df81b2b7947371"
 )
 
 declare -A sfj_8_sums=(
-	[version]="1.8.0_sr4fp1"
-	[i386]="737b4e3dc317cfe8c45512eddf3a520c9bf30a4aef902c415e89572e74c394e0"
-	[ppc64le]="d99393379775541da45f2d71f97584a146c9a3a15b8646ab03d9bed439aaa4e0"
-	[s390]="b86bc776aee9d83344d6f0ca8d4df053d69383e766651f6351a276ca251f0e13"
-	[s390x]="6d5ef74d4d19120ed0e88df54036d51ec5ee13e3d9fafa9c4bb818706439904e"
-	[x86_64]="e37d585c7e7df77065254ed866bc8db367e74720eea4507774d891b943c6428f"
+	[version]="1.8.0_sr4fp6"
+	[i386]="2e77fb857fc407416ed69ed7ebc3fb5744d677236370b529f00e25dd0abb9596"
+	[ppc64le]="c80f0a8d0d5ccca66f860cab5159920a32a157d4aba43ada20d3f4c36a5a3157"
+	[s390]="34c41506d8b836abcce27a54a7eb3ab1d4c71da211d9e22ab9bd200b281de8ff"
+	[s390x]="02ab3de0fd033f49b10b6fc1cf2046ef92fcbc6d548d65824121d51498148ac7"
+	[x86_64]="67a5d790e414c230382d534b7df251d9341d2a4996b39a5081e6333d22ef38e4"
 )
 
 declare -A sdk_9_sums=(
@@ -115,7 +115,7 @@ print_ubuntu_os() {
 # Print the supported Alpine OS
 print_alpine_os() {
 	cat >> $1 <<-EOI
-	FROM alpine:3.4
+	FROM alpine:3.6
 
 	EOI
 }
@@ -155,12 +155,11 @@ EOI
 print_alpine_pkg() {
 	cat >> $1 <<'EOI'
 
-RUN apk --update add --no-cache openssl ca-certificates \
-    && GLIBC_VER="2.23-r3" \
+RUN apk --update add --no-cache openssl ca-certificates xz \
+    && GLIBC_VER="2.25-r0" \
     && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
     && wget -q -O /tmp/$GLIBC_VER.apk $ALPINE_GLIBC_REPO/$GLIBC_VER/glibc-$GLIBC_VER.apk \
     && apk add --allow-untrusted /tmp/$GLIBC_VER.apk \
-    && apk --update add xz \
     && wget -q -O /tmp/gcc-libs.tar.xz https://www.archlinux.org/packages/core/x86_64/gcc-libs/download \
     && mkdir /tmp/gcc \
     && tar -xf /tmp/gcc-libs.tar.xz -C /tmp/gcc \
@@ -374,8 +373,8 @@ do
 				if [ "$os" == "ubuntu" ]; then
 					generate_ubuntu $file
 				elif [ "$os" == "alpine" ]; then
-					# Alpine is supported for x86_64 arch and JRE and SFJ packages only
-					if [ "$arch" == "x86_64" ] && [ "$pack" == "jre" -o "$pack" == "sfj" ]; then
+					# Alpine is supported for x86_64 arch only
+					if [ "$arch" == "x86_64" ]; then
 						generate_alpine $file
 					fi
 				fi

@@ -16,11 +16,20 @@
 #
 set -eo pipefail
 
+function usage() {
+	echo
+	echo "Usage: $0 [-h] [-i <java|tools|both>] [-v <8|9>]"
+	echo " h = help. "
+	echo " i = Images to be built: 'java' only, 'tools' only, default = 'both'. "
+	echo " v = version of binaries to push. "
+	echo
+	exit 1
+}
+
 # Docker Images to be generated
 version="8 9"
 package="jre sdk sfj"
 osver="ubuntu alpine"
-unset tools
 
 build_failed=0
 
@@ -31,6 +40,10 @@ if [ $? != 0 ]; then
 	exit 1
 fi
 
+baseimage="j9"
+rootdir=".."
+tools="maven"
+
 # Supported JRE arches for the machine that we are currently building on
 machine=`uname -m`
 case $machine in
@@ -38,14 +51,16 @@ x86_64)
 	# No need for i386 builds for now
 	# arches="i386 x86_64"
 	arches="x86_64"
-	tools="maven"
+	images="java tools"
 	;;
 s390x)
 	# No support for s390 Docker Images for now, only s390x.
 	arches="s390x"
+	images="java"
 	;;
 ppc64le)
 	arches="ppc64le"
+	images="java"
 	;;
 *)
 	echo "Unsupported arch:$machine, Exiting"
@@ -53,8 +68,30 @@ ppc64le)
 	;;
 esac
 
-baseimage="j9"
-rootdir=".."
+while getopts hi:v: opts
+do
+	case $opts in
+	i)
+		# which images to push.
+		ival="$OPTARG"
+		[[ $ival == "java" || $ival == "tools"  || $ival == "both" ]] || usage
+		if [ $ival == "both" ]; then
+			images="java tools"
+		else
+			images=$ival
+		fi
+		;;
+	v)
+		# Update only provided version
+		jver="$OPTARG"
+		((jver == 8 || jver == 9)) || usage
+		version=$jver
+		;;
+	*)
+		usage
+	esac
+done
+shift $(($OPTIND-1))
 
 function timediff() {
 	ssec=`date --utc --date "$1" +%s`
@@ -88,13 +125,13 @@ function check_build_status() {
 	num_building=`find $rootdir -name "*.out" | wc -l`
 	num_built=`find $rootdir -name "*.out" -exec grep "Successfully built" {} \; | wc -l`
 	num_running=$(($num_building-$num_built))
-	builds_running=`ps -ef | grep "docker" | grep "build" | grep -v grep | wc -l`
+	builds_running=`ps -ef | grep "docker" | grep "no-cache" | grep -v grep | wc -l`
 
 	if [ $num_built -ne $num_building ]; then
 		num_error=`find $rootdir -name "*.err" -exec ls -l {} \; | \
 				awk '{ print $5 }' | grep -v "0" | wc -l`
 		if [ $num_running -ne $builds_running ] || [ $num_error -ne 0 ]; then
-			printf "(%02d) build(s) failed, Some builds may still be running\n" "$num_error"
+			printf "(%02d) build(s) failed, Some builds may still be running. %02d(n):%02d(b)\n" "$num_error" "$num_running" "$builds_running"
 		else
 			printf "%02d(t):%02d(c), build(s) ongoing\n" "$num_building" "$num_built"
 		fi
@@ -106,7 +143,7 @@ function check_build_status() {
 
 function wait_for_build_complete() {
 	echo
-	sleep 2
+	sleep 5
 	status=$(check_build_status)
 	while [[ "$status" == *"build(s) ongoing"* ]];
 	do
@@ -127,73 +164,79 @@ function wait_for_build_complete() {
 	echo
 }
 
-cleanup_logs
-
-echo
-echo "Starting ibmjava docker image builds in parallel..."
-# Iterate through all the Dockerfiles and build the right ones
-sdate=$(getdate)
-for ver in $version
-do
-	for pack in $package
+# Iterate through all the Java Dockerfiles and build the right ones
+function build_java_images() {
+	echo
+	echo "Starting ibmjava docker image builds in parallel..."
+	for ver in $version
 	do
-		for arch in $arches
+		for pack in $package
 		do
-			for os in $osver
+			for arch in $arches
 			do
-				file="$rootdir/$ver/$pack/$arch/$os/Dockerfile"
-				if [ ! -f $file ]; then
-					continue;
-				fi
-				ddir=`dirname $file`
-				logfile=`basename $file`
-				pushd $ddir >/dev/null
-				if [ "$os" != "ubuntu" ]; then
-					ostag=$pack-$os
-				else
-					ostag=$pack
-				fi
-				if [ "$arch" == "x86_64" ]; then
-					image_name=$baseimage:$ver-$ostag
-				elif [ "$arch" == "i386" ]; then
-					image_name=$arch/$baseimage:$ver-$ostag
-				else
-					image_name=$machine/$baseimage:$ver-$ostag
-				fi
-				build_image $image_name $logfile
-				popd >/dev/null
+				for os in $osver
+				do
+					file="$rootdir/$ver/$pack/$arch/$os/Dockerfile"
+					if [ ! -f $file ]; then
+						continue;
+					fi
+					ddir=`dirname $file`
+					logfile=`basename $file`
+					pushd $ddir >/dev/null
+					if [ "$os" != "ubuntu" ]; then
+						ostag=$pack-$os
+					else
+						ostag=$pack
+					fi
+					if [ "$arch" == "x86_64" ]; then
+						image_name=$baseimage:$ver-$ostag
+					elif [ "$arch" == "i386" ]; then
+						image_name=$arch/$baseimage:$ver-$ostag
+					else
+						image_name=$machine/$baseimage:$ver-$ostag
+					fi
+					build_image $image_name $logfile
+					popd >/dev/null
+				done
 			done
 		done
 	done
-done
+}
 
-wait_for_build_complete
-
-if [ $build_failed -eq 1 ]; then
+# Iterate through all the tools Dockerfiles and build the right ones.
+function build_tools_images() {
 	echo
-	echo "Not building tool images as earlier builds failed"
-	exit -1;
-fi
-
-echo
-echo "Starting tools docker image builds in parallel..."
-# Tools are only built on x86_64, on other arches this is a no-op
-sdate=$(getdate)
-for ver in $version
-do
-	for tool in $tools
+	echo "Starting tools docker image builds in parallel..."
+	for ver in $version
 	do
-		file="$rootdir/$ver/$tool/Dockerfile"
-		if [ ! -f $file ]; then
-			continue;
-		fi
-		ddir=`dirname $file`
-		logfile=`basename $file`
-		pushd $ddir >/dev/null
-		image_name=$baseimage:$ver-$tool
-		build_image $image_name $logfile
-		popd >/dev/null
+		for tool in $tools
+		do
+			file="$rootdir/$ver/$tool/Dockerfile"
+			if [ ! -f $file ]; then
+				continue;
+			fi
+			ddir=`dirname $file`
+			logfile=`basename $file`
+			pushd $ddir >/dev/null
+			image_name=$baseimage:$ver-$tool
+			build_image $image_name $logfile
+			popd >/dev/null
+		done
 	done
-done
+}
 
-wait_for_build_complete
+# Remove any old log files.
+cleanup_logs
+
+# Build only the set of images specified.
+for val in $images
+do
+	sdate=$(getdate)
+	build_"$val"_images
+	wait_for_build_complete
+	if [ $build_failed -eq 1 ]; then
+		echo
+		echo "ERROR: $val builds failed"
+		exit -1;
+	fi
+done
